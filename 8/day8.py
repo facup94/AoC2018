@@ -21,12 +21,9 @@ def get_node(input):
     node.add_metadata(input.pop(0))
 
   return node
-  
 
-PRUEBA = False
-ARCHIVO_ENTRADA = 'input.txt' if  not PRUEBA else 'input2.txt'
 
-with open(ARCHIVO_ENTRADA, 'r') as input:
+with open('input.txt', 'r') as input:
   tree_original = [int(x) for x in input.readline().split(' ')]
 
 root = get_node(tree_original[:])
