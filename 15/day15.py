@@ -15,29 +15,66 @@ class Unit:
   def __repr__(self):
     return self.tipo + ' (' + str(self.posX) + ', ' + str(self.posY) + ')' 
 
+class Graph:
+  def __init__(self):
+    self.nodes = set()
+    self.edges = defaultdict(list)
+    self.distances = {}
 
-def can_reach(mapa, start, end):
-  if end in mapa[start]:
-    return True
-  else:
-    return any([can_reach(mapa, x, end) for x in mapa[start]])
+  def add_node(self, value):
+    self.nodes.add(value)
 
-def reachable_spaces(mapa, start, spaces: set):
-  spaces.add(start)
-  for n in mapa[start]:
-    if n not in spaces:
-      reachable_spaces(mapa, n, spaces)
+  def add_edge(self, from_node, to_node, distance):
+    if to_node not in self.edges[from_node]:
+      self.edges[from_node].append(to_node)
+    if from_node not in self.edges[to_node]:
+      self.edges[to_node].append(from_node)
+    if (from_node, to_node) not in self.distances:
+      self.distances[(from_node, to_node)] = distance
+    if (to_node, from_node) not in self.distances:
+      self.distances[(to_node, from_node)] = distance
+
+
+def dijsktra(graph, initial):
+  visited = {initial: 0}
+  path = {}
+
+  nodes = set(graph.nodes)
+
+  while nodes: 
+    min_node = None
+    for node in nodes:
+      if node in visited:
+        if min_node is None:
+          min_node = node
+        elif visited[node] < visited[min_node]:
+          min_node = node
+
+    if min_node is None:
+      break
+
+    nodes.remove(min_node)
+    current_weight = visited[min_node]
+
+    for edge in graph.edges[min_node]:
+      weight = current_weight + graph.distances[(min_node, edge)]
+      if edge not in visited or weight < visited[edge]:
+        visited[edge] = weight
+        path[edge] = min_node
+
+  return visited, path
 
 
 
 import copy
 import sys
+from collections import defaultdict
 
 units = []
 mapa = []
 
 # Read input
-with open('input.txt', 'r') as input_file:
+with open('c:\\Users\\nbcorar399\\Desktop\\advent_of_code_2018\\15\\input.txt', 'r') as input_file:
   y = 0
   for line in input_file:
     line = line.strip()
@@ -100,28 +137,48 @@ while len(goblins) > 0 and len(elves) > 0:
           accessbile_spaces_dict[(x,y)].append((x-1,y))
         if x+1 < len(occupied_spaces_map[y]) and occupied_spaces_map[y][x+1] == ".":
           accessbile_spaces_dict[(x,y)].append((x+1,y))
-
     
-    map_copy = copy.deepcopy(mapa)
-    for u in units:
-      map_copy[u.posY][u.posX] = u.tipo
-    for row in map_copy:
-      print(''.join(row))
+    # Graph
+    graph = Graph()
+    # Add nodes
+    for y in range(len(occupied_spaces_map)):
+      for x in range(len(occupied_spaces_map[y])):
+        if occupied_spaces_map[y][x] == '.':
+          graph.add_node((x, y))
+    # Add edges
+    for y in range(len(occupied_spaces_map)):
+      for x in range(len(occupied_spaces_map[y])):
+        if occupied_spaces_map[y][x] == '.':
+          for n in accessbile_spaces_dict[(x,y)]:
+            graph.add_edge((x,y), n, 1)
+    # Add starting node and edges from there
+    graph.add_node((unit.posX, unit.posY))
+    if unit.posY-1 >= 0 and occupied_spaces_map[unit.posY-1][unit.posX] == '.':
+      graph.add_edge((unit.posX, unit.posY), (unit.posX, unit.posY-1), 1)
+    if unit.posY+1 < len(occupied_spaces_map) and occupied_spaces_map[unit.posY+1][unit.posX] == '.':
+      graph.add_edge((unit.posX, unit.posY), (unit.posX, unit.posY+1), 1)
+    if unit.posX-1 >= 0 and occupied_spaces_map[unit.posY][unit.posX-1] == '.':
+      graph.add_edge((unit.posX, unit.posY), (unit.posX-1, unit.posY), 1)
+    if unit.posX+1 < len(occupied_spaces_map[unit.posY]) and occupied_spaces_map[unit.posY][unit.posX+1] == '.':
+      graph.add_edge((unit.posX, unit.posY), (unit.posX+1, unit.posY), 1)
+
+    # Apply Dijsktra
+    accessible_targets, accessible_targets_paths = dijsktra(graph, (unit.posX,unit.posY))
+    
+    while len(accessible_targets) > 0:
+      print(accessible_targets)
+      closest_target = min(accessible_targets, key=accessible_targets.get)
+      print(closest_target)
+      print(min(accessible_targets))
+      sys.exit()
+      if closest_target not in open_squares_adjacent_target:
+        accessible_targets.pop(closest_target)
+        continue
+
+      sys.exit()
     
 
-    s = (25, 22)
-    print(accessbile_spaces_dict[s])
-    w = set()
-    reachable_spaces(accessbile_spaces_dict, s, w)
-    print(w)
     sys.exit()
-
-    reachable_positions = []
-    for space in open_squares_adjacent_target:
-      if can_reach(accessbile_spaces_dict, (unit.posX, unit.posY), space):
-        pass
-    
-
 
 
     
